@@ -69,7 +69,11 @@ export const SignalGlyph = ({
       {label !== undefined && (
         <text
           x={cx + 8}
-          y={cy - 8}
+          // Drawn *below* the dot, not above — the node's own
+          // label and (for platform sections) the platform bar
+          // both live in the space above the node. Sharing that
+          // space caused signal labels to print on top of them.
+          y={cy + 16}
           fill="#808080"
           fontSize={9}
           fontFamily="monospace"

@@ -186,8 +186,21 @@ export const App = (): JSX.Element => {
                 type: 'START_SCENARIO',
                 scenarioId: scenario.id as unknown as ScenarioId,
               });
+              // Starting a scenario should also start the simulation
+              // clock — requiring the dispatcher to separately find
+              // and press the clock's own Start button is a trap,
+              // not a feature. Advanced users can still Pause/Resume/
+              // Tick from the toolbar once things are moving.
+              if (!isStarted) {
+                engine.start();
+                setIsStarted(true);
+              }
             }}
-            onEndScenario={() => start({ type: 'END_SCENARIO' })}
+            onEndScenario={() => {
+              start({ type: 'END_SCENARIO' });
+              engine.stop();
+              setIsStarted(false);
+            }}
           />
           <StatusPanel />
         </div>

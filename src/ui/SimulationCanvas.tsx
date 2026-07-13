@@ -83,6 +83,20 @@ export const SimulationCanvas = ({
     return layout.nodes as unknown as ReadonlyMap<string, NodePosition>;
   }, [layout.nodes]);
 
+  // Sections that belong to a platform already get a name via the
+  // platform bar drawn above them. Also drawing the section's own
+  // node label there just prints two labels on top of each other,
+  // so we suppress the plain node label for those sections.
+  const platformSectionIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const platform of snapshot.platforms.values()) {
+      for (const sid of platform.sectionIds) {
+        set.add(sid as unknown as string);
+      }
+    }
+    return set;
+  }, [snapshot.platforms]);
+
   const handleSignalClick = useCallback(
     (signalId: SignalId) => {
       // If a route is being set (pendingRouteFrom is set),
@@ -160,8 +174,11 @@ export const SimulationCanvas = ({
         {snapshot.topology.nodes.map((n) => {
           const pos = layout.nodes.get(n.id as never);
           if (!pos) return null;
-          const label =
+          const rawLabel =
             'label' in n ? (n as { label?: string }).label ?? undefined : undefined;
+          const label = platformSectionIds.has(n.id as unknown as string)
+            ? undefined
+            : rawLabel;
           const isSel = isSelected('switch', n.id as unknown as string);
           if (n.kind === 'switch') {
             return (
