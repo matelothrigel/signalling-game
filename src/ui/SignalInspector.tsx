@@ -81,6 +81,38 @@ export const SignalInspector = ({
         </button>
       </div>
 
+      {/*
+        Read-only indicator lights, not controls: in this engine
+        the aspect is computed by the interlocking from route and
+        occupancy state (see ARCHITECTURE §7) — a dispatcher can't
+        force an aspect directly, so unlike a real physical panel
+        these aren't buttons. "C" (caution / preliminary caution)
+        is greyed out because the engine only models a two-aspect
+        stop/proceed signal today; a genuine multi-aspect model
+        needs interlocking changes, not just a paint job here.
+      */}
+      <div className="signal-inspector-aspect-lights">
+        <div
+          className={`signal-aspect-light ${signal.aspect === 'stop' ? 'lit-danger' : ''}`}
+          title="Danger (stop)"
+        >
+          D
+        </div>
+        <div
+          className="signal-aspect-light unsupported"
+          title="Caution — not modelled by this engine yet (two-aspect signalling only)"
+        >
+          C
+        </div>
+        <div
+          className={`signal-aspect-light ${signal.aspect === 'proceed' ? 'lit-proceed' : ''}`}
+          title="Proceed"
+        >
+          P
+        </div>
+      </div>
+      <div className="signal-inspector-auto-tag">Auto — engine controlled</div>
+
       <div className="signal-inspector-body">
         <div className="signal-inspector-row">
           <span className="signal-inspector-label">Block</span>

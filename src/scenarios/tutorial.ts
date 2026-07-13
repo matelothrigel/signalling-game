@@ -59,16 +59,47 @@ import type { Platform } from '@/types/infrastructure';
 const buildTutorialTopology = (): Topology =>
   new Topology({
     nodes: [
-      { kind: 'section', id: asId<NodeId>('EXT'), label: 'External' },
-      { kind: 'section', id: asId<NodeId>('LEAD'), label: 'Lead' },
-      { kind: 'section', id: asId<NodeId>('P1'), label: 'P1' },
-      { kind: 'section', id: asId<NodeId>('P2'), label: 'P2' },
-      { kind: 'section', id: asId<NodeId>('P3'), label: 'P3' },
-      { kind: 'section', id: asId<NodeId>('P4'), label: 'P4' },
+      {
+        kind: 'section',
+        id: asId<NodeId>('EXT'),
+        label: 'External',
+        metadata: { position: { x: 40, y: 150 } },
+      },
+      {
+        kind: 'section',
+        id: asId<NodeId>('LEAD'),
+        label: 'Lead',
+        metadata: { position: { x: 180, y: 150 } },
+      },
+      {
+        kind: 'section',
+        id: asId<NodeId>('P1'),
+        label: 'P1',
+        metadata: { position: { x: 520, y: 60 } },
+      },
+      {
+        kind: 'section',
+        id: asId<NodeId>('P2'),
+        label: 'P2',
+        metadata: { position: { x: 520, y: 120 } },
+      },
+      {
+        kind: 'section',
+        id: asId<NodeId>('P3'),
+        label: 'P3',
+        metadata: { position: { x: 520, y: 200 } },
+      },
+      {
+        kind: 'section',
+        id: asId<NodeId>('P4'),
+        label: 'P4',
+        metadata: { position: { x: 520, y: 260 } },
+      },
       {
         kind: 'switch',
         id: asId<NodeId>('W1'),
         legs: [asId<NodeId>('LEAD'), asId<NodeId>('P1'), asId<NodeId>('P2')],
+        metadata: { position: { x: 320, y: 90 } },
         legMap: {
           normal: [
             { from: asId<NodeId>('LEAD'), to: asId<NodeId>('P1') },
@@ -84,6 +115,7 @@ const buildTutorialTopology = (): Topology =>
         kind: 'switch',
         id: asId<NodeId>('W2'),
         legs: [asId<NodeId>('LEAD'), asId<NodeId>('P3'), asId<NodeId>('P4')],
+        metadata: { position: { x: 320, y: 230 } },
         legMap: {
           normal: [
             { from: asId<NodeId>('LEAD'), to: asId<NodeId>('P3') },

@@ -389,6 +389,60 @@ body,
   flex-wrap: wrap;
 }
 
+.signal-inspector-aspect-lights {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 4px;
+}
+
+.signal-aspect-light {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: monospace;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.signal-aspect-light.lit-danger {
+  background: #c0392b;
+  color: #fff;
+  border-color: #e05545;
+}
+
+.signal-aspect-light.lit-caution {
+  background: #c0a020;
+  color: #fff;
+  border-color: #e0be40;
+}
+
+.signal-aspect-light.lit-proceed {
+  background: #2e8b3a;
+  color: #fff;
+  border-color: #4cb85c;
+}
+
+.signal-aspect-light.unsupported {
+  opacity: 0.35;
+  cursor: help;
+}
+
+.signal-inspector-auto-tag {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 0 12px 8px;
+  text-transform: uppercase;
+}
+
 .route-arm-banner {
   background: rgba(78, 201, 176, 0.1);
   border: 1px solid var(--color-accent);

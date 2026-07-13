@@ -25,6 +25,12 @@ const COLOR_OCCUPIED = '#d0a040';
 const COLOR_ROUTE = '#4ec9b0';
 const COLOR_ROUTE_OCCUPIED = '#80d8c0';
 
+/** Distance in px between track-circuit dots along an edge. */
+const DOT_SPACING = 22;
+const DOT_RADIUS = 1.6;
+const DOT_COLOR_CLEAR = '#2e8b3a';
+const DOT_COLOR_OCCUPIED = '#c0392b';
+
 export const EdgeGlyph = ({
   layout,
   inActiveRoute,
@@ -46,16 +52,41 @@ export const EdgeGlyph = ({
   if (signalAspect === 'stop' && inActiveRoute) {
     stroke = '#a04040';
   }
+
+  const dx = layout.to.x - layout.from.x;
+  const dy = layout.to.y - layout.from.y;
+  const length = Math.hypot(dx, dy);
+  const dotCount = Math.max(0, Math.floor(length / DOT_SPACING) - 1);
+  const dotColor = occupied ? DOT_COLOR_OCCUPIED : DOT_COLOR_CLEAR;
+
   return (
-    <line
-      data-edge-id={layout.signalId !== null ? 'with-signal' : 'plain'}
-      x1={layout.from.x}
-      y1={layout.from.y}
-      x2={layout.to.x}
-      y2={layout.to.y}
-      stroke={stroke}
-      strokeWidth={width}
-      strokeLinecap="round"
-    />
+    <g>
+      <line
+        data-edge-id={layout.signalId !== null ? 'with-signal' : 'plain'}
+        x1={layout.from.x}
+        y1={layout.from.y}
+        x2={layout.to.x}
+        y2={layout.to.y}
+        stroke={stroke}
+        strokeWidth={width}
+        strokeLinecap="round"
+      />
+      {/* Track-circuit indicators: the engine only tracks
+          occupancy per whole section today, so every dot on
+          a given edge shares that section's colour rather
+          than showing independent sub-block state. */}
+      {Array.from({ length: dotCount }, (_, i) => {
+        const t = (i + 1) / (dotCount + 1);
+        return (
+          <circle
+            key={i}
+            cx={layout.from.x + dx * t}
+            cy={layout.from.y + dy * t}
+            r={DOT_RADIUS}
+            fill={dotColor}
+          />
+        );
+      })}
+    </g>
   );
 };

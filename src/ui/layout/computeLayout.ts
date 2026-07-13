@@ -75,6 +75,9 @@ export interface TopologyLayout {
 }
 
 export const computeLayout = (topology: TopologyData): TopologyLayout => {
+  const explicit = tryExplicitLayout(topology);
+  if (explicit) return explicit;
+
   const nodeIds: NodeId[] = [];
   for (const n of topology.nodes) nodeIds.push(n.id);
 
@@ -124,7 +127,8 @@ export const computeLayout = (topology: TopologyData): TopologyLayout => {
   }
 
   const nodes = new Map<NodeId, NodePosition>();
-  let maxY = 0;
+  let minY = Infinity;
+  let maxY = -Infinity;
   for (const [lvl, ids] of byLayer) {
     const sorted = sortLayer(ids, nodeIds);
     const total = sorted.length;
@@ -134,7 +138,24 @@ export const computeLayout = (topology: TopologyData): TopologyLayout => {
       const x = ORIGIN_X + lvl * LEVEL_WIDTH;
       nodes.set(id, { x, y });
       if (y > maxY) maxY = y;
+      if (y < minY) minY = y;
     }
+  }
+
+  // A layer with an odd node count centres around ORIGIN_Y, which
+  // can push nodes above y = 0 (e.g. a 3-way switch whose branches
+  // straddle the middle row). Left alone, those nodes render above
+  // the top of the SVG viewBox and get clipped — the "stray edge"
+  // that trails off the top of the canvas. Shift the whole layout
+  // down so the smallest y lands at ORIGIN_Y; every node stays on
+  // canvas and relative spacing is unchanged.
+  if (nodes.size > 0 && minY < ORIGIN_Y) {
+    const shift = ORIGIN_Y - minY;
+    for (const [id, pos] of nodes) {
+      nodes.set(id, { x: pos.x, y: pos.y + shift });
+    }
+    maxY += shift;
+    minY += shift;
   }
 
   const edges = new Map<EdgeId, EdgeLayout>();
@@ -162,6 +183,81 @@ export const computeLayout = (topology: TopologyData): TopologyLayout => {
  * undirected so switches and bidirectional edges are
  * handled uniformly.
  */
+/**
+ * Infrastructure authors can hand-place a node by setting
+ * `metadata.position = { x, y }` (the engine treats
+ * `metadata` as an opaque bag, see {@link TopologyNode}).
+ *
+ * If **every** node in the topology carries a valid
+ * position, that hand-authored layout is used verbatim
+ * (normalised so nothing sits off-canvas). This is how a
+ * real yard/station diagram — parallel roads, a throat
+ * that actually looks like a throat — gets built, as
+ * opposed to the BFS layering below, which only ever
+ * produces a readable diagram by coincidence.
+ *
+ * If even one node is missing a position, we don't mix
+ * hand-placed and auto-placed nodes in the same diagram
+ * (that produces worse results than pure auto-layout) —
+ * we fall back to the BFS layout for the whole topology.
+ */
+const tryExplicitLayout = (topology: TopologyData): TopologyLayout | null => {
+  const nodes = new Map<NodeId, NodePosition>();
+  for (const n of topology.nodes) {
+    const pos = readExplicitPosition(n);
+    if (!pos) return null;
+    nodes.set(n.id, pos);
+  }
+  if (nodes.size === 0) return null;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of nodes.values()) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const shiftX = minX < ORIGIN_X ? ORIGIN_X - minX : 0;
+  const shiftY = minY < ORIGIN_Y ? ORIGIN_Y - minY : 0;
+  if (shiftX !== 0 || shiftY !== 0) {
+    for (const [id, p] of nodes) {
+      nodes.set(id, { x: p.x + shiftX, y: p.y + shiftY });
+    }
+  }
+
+  const edges = new Map<EdgeId, EdgeLayout>();
+  for (const e of topology.edges) {
+    const from = nodes.get(e.from);
+    const to = nodes.get(e.to);
+    if (!from || !to) continue;
+    edges.set(e.id, { from, to, signalId: e.signalId ?? null });
+  }
+
+  return {
+    nodes,
+    edges,
+    width: maxX + shiftX + ORIGIN_X,
+    height: maxY + shiftY + ORIGIN_Y,
+  };
+};
+
+const readExplicitPosition = (node: TopologyNode): NodePosition | null => {
+  const metadata = (node as { metadata?: Readonly<Record<string, unknown>> }).metadata;
+  const pos = metadata?.position;
+  if (
+    typeof pos === 'object' &&
+    pos !== null &&
+    typeof (pos as { x?: unknown }).x === 'number' &&
+    typeof (pos as { y?: unknown }).y === 'number'
+  ) {
+    return { x: (pos as { x: number }).x, y: (pos as { y: number }).y };
+  }
+  return null;
+};
+
 const buildAdjacency = (
   edges: readonly Edge[],
 ): Map<NodeId, { nodeId: NodeId; edgeId: EdgeId }[]> => {
